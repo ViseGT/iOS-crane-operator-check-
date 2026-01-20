@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>起重機/吊掛作業聯合自檢表</title>
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="起重吊掛檢查">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <meta name="theme-color" content="#ffffff">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        /* === 正式文件風格 CSS === */
+        
+        /* 1. 背景與邊距 */
+        body { 
+            background-color: #555; 
+            padding: 20px 10px; 
+            padding-bottom: 120px; 
+            font-family: "Microsoft JhengHei", "Heiti TC", serif; 
+            color: #000;
+        }
+        
+        /* 2. 主容器 */
+        #app-container { 
+            max-width: 850px; 
+            margin: 0 auto; 
+            background-color: #fff;
+            padding: 25px;
+            border: 3px solid #cc0000; 
+            outline: 4px solid #000000; 
+            outline-offset: 3px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+        }
+        
+        /* 3. 標題區塊 */
+        .app-header { 
+            text-align: center; 
+            margin-bottom: 25px; 
+            padding-bottom: 15px; 
+            border-bottom: 3px double #000; 
+        }
+        .app-title { 
+            font-size: 1.8rem; 
+            font-weight: 900; 
+            color: #000; 
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+        .doc-subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: normal;
+        }
+
+        /* 4. 區塊標題 */
+        .section-title { 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            color: #fff; 
+            background-color: #000; 
+            padding: 5px 10px;
+            margin-bottom: 15px; 
+            margin-top: 20px;
+            border-left: 5px solid #cc0000; 
+        }
+
+        /* 5. 輸入欄位 */
+        label { 
+            font-weight: bold; 
+            color: #000; 
+            margin-bottom: 3px; 
+            display: block; 
+            font-size: 0.95rem; 
+        }
+        input[type="text"], input[type="date"], select { 
+            width: 100%; 
+            padding: 8px; 
+            border: 1px solid #000; 
+            border-radius: 0; 
+            font-size: 16px; 
+            margin-bottom: 15px; 
+            background: #fff; 
+        }
+        input[type="text"]:focus, input[type="date"]:focus, select:focus {
+            outline: 2px solid #cc0000;
+            border-color: #cc0000;
+        }
+        .highlight-label { color: #cc0000 !important; font-weight: 900; }
+        .highlight-input { border: 2px solid #cc0000 !important; background-color: #fffafa !important; }
+
+        /* 6. 檢查項目列表 */
+        .panel-row { 
+            background: white; 
+            margin-bottom: 0; 
+            padding: 15px; 
+            border-bottom: 1px dashed #999; 
+            border-radius: 0;
+            transition: background 0.2s;
+        }
+        .panel-row:last-child { border-bottom: none; }
+        
+        .group-box {
+            background: #fff; 
+            border: 2px solid #000; 
+            padding: 0; 
+            border-radius: 0; 
+            margin-bottom: 25px;
+        }
+
+        .panel-row.completed { background-color: #f0fff4; border-left: 5px solid #198754; } 
+        .panel-row.error { background-color: #fff5f5; border-left: 5px solid #dc3545; }
+        .item-title { font-weight: bold; font-size: 1.05rem; color: #000; margin-bottom: 10px; line-height: 1.4; }
+
+        /* 7. 按鈕樣式 */
+        .btn-check-group { display: flex; gap: 0; width: 100%; border: 1px solid #000; }
+        .btn-check-label { 
+            flex: 1; text-align: center; padding: 10px; 
+            border: none; border-right: 1px solid #000;
+            border-radius: 0; cursor: pointer; font-size: 1rem; font-weight: bold; 
+            background: #fff; color: #000; transition: 0.2s;
+        }
+        .btn-check-label:last-child { border-right: none; }
+        
+        .btn-check-pass:checked + label { background: #198754; color: white; }
+        .btn-check-fail:checked + label { background: #dc3545; color: white; }
+
+        /* 8. 圖片與簽名 */
+        .illustration-container {
+            text-align: center; margin-bottom: 15px; padding: 5px;
+            border: 1px solid #000; background: #fff;
+        }
+        .illustration-img { max-width: 100%; max-height: 200px; object-fit: contain; }
+
+        .sig-wrapper { 
+            width: 100%; height: 180px; 
+            border: 2px solid #000; 
+            border-radius: 0; 
+            background: #fff; position: relative;
+        }
+        .sig-error { border-color: #dc3545; background: #fff5f5; }
+
+        /* 9. 懸浮按鈕 */
+        .fab-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; align-items: flex-end; }
+        .btn-float { 
+            padding: 12px 20px; border-radius: 5px; 
+            color: white; font-weight: bold; border: 2px solid #fff; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; min-width: 120px; font-size: 1rem;
+        }
+        .btn-main { background: #000; }
+        .btn-warn { background: #cc0000; font-size: 0.9rem; min-width: 100px; }
+        
+        /* 階段標籤 */
+        .stage-badge { 
+            display: inline-block; padding: 4px 8px; border: 1px solid #000; 
+            font-size: 0.8rem; margin-bottom: 5px; font-weight: bold; color: #fff; background: #333; 
+        }
+
+        .preview-img { max-width: 100%; height: 150px; border: 1px solid #000; display: none; margin-top: 5px; }
+
+        #ios-install-prompt {
+            display: none; position: fixed; bottom: 0; left: 0; width: 100%;
+            background: white; padding: 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 2000; text-align: center; border-top: 4px solid #cc0000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="fab-container" id="fab-menu">
+    <button type="button" class="btn-float btn-main" onclick="downloadReport()">📥 下載報告</button>
+    <button type="button" class="btn-float btn-warn" onclick="clearDraft()">🗑️ 清除重填</button>
+</div>
+
+<div id="app-container">
+    <form id="checkForm">
+        <div class="app-header">
+            <div class="app-title">🏗️ 起重吊掛作業聯合自檢</div>
+            <div class="doc-subtitle">CRANE & RIGGING SAFETY CHECKLIST</div>
+            <div style="margin-top:5px;">
+                <small id="autoSaveStatus" style="color:#198754; display:none; font-weight:bold; border:1px solid #198754; padding:2px 5px;">✅ 資料已自動存檔</small>
+            </div>
+        </div>
+
+        <div class="section-title">1. 作業基本資料 (BASIC INFO)</div>
+        <div class="row">
+            <div class="col-12"><label>檢查日期 Date</label><input type="date" id="checkDate"></div>
+        </div>
+        <div class="row">
+            <div class="col-6"><label>1. 主承商 Main Contractor</label><input type="text" id="mainContractor" oninput="autoSave()"></div>
+            <div class="col-6"><label>2. 次承商 Sub Contractor</label><input type="text" id="subContractor" oninput="autoSave()"></div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <label class="highlight-label">3. 檢查階段 Check Stage (請選擇) ★</label>
+                <select id="checkStage" class="highlight-input" onchange="renderPanels(); autoSave();">
+                    <option value="">-- 請選擇檢查階段 --</option>
+                    <option value="pre">一、 作業前檢查 (Pre-Operation)</option>
+                    <option value="during">二、 作業中確認 (During Operation)</option>
+                    <option value="post">三、 作業後檢查 (Post-Operation)</option>
+                </select>
+            </div>
+            <div class="col-6"><label>4. 檢查人員姓名 Name</label><input type="text" id="inspectorName" oninput="autoSave()"></div>
+            <div class="col-6"><label>5. 吊掛點位/車號</label><input type="text" id="liftingPoint" placeholder="例如: A區 / 車號123" oninput="autoSave()"></div>
+        </div>
+
+        <div id="panelList"></div>
+
+        <div id="sig-section">
+            <div class="section-title">3. 簽名確認 (SIGNATURE)</div>
+            <div class="sig-wrapper" id="sig-container">
+                <canvas id="sig-canvas"></canvas>
+            </div>
+            <div style="margin-top:10px; text-align:right;">
+                <button type="button" class="btn btn-sm btn-outline-dark" onclick="clearSignature()" style="border-radius:0;">↺ 清除重簽 (Clear)</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="ios-install-prompt">
+    <p>📲 <strong>安裝到手機：</strong><br>點擊下方分享按鈕，然後選擇「加入主畫面」</p>
+    <button class="btn btn-sm btn-outline-dark" onclick="document.getElementById('ios-install-prompt').style.display='none'">關閉</button>
+</div>
+
+<script>
+    // === 1. 更新後的資料設定 (依據您的新需求) ===
+    // stage: 'pre' (作業前), 'during' (作業中), 'post' (作業後)
+    const CHECK_CONFIG = [
+        // === 一、作業前檢查 (Pre-Operation) ===
+        {
+            type: "group",
+            id: "pre_doc",
+            stage: "pre",
+            title: "1. 文件與權限確認",
+            items: [
+                { id: "pre_01", title: "【操作資格與狀態】確認操作員資格與身心狀況良好，並已閱讀相關安全手冊或指令。", image: "1-1.png" },
+                { id: "pre_02", title: "【現場安全確認】確認吊掛作業作業條件安全(場地、氣溫、天氣等)，並傳遞給現場作業人員。", image: "1-2.png" }
+            ]
+        },
+        {
+            type: "group",
+            id: "pre_visual",
+            stage: "pre",
+            title: "2. 目視檢查 (Visual Inspection)",
+            items: [
+                { id: "pre_03", title: "【起重機本體】檢查是否有漏油、漏氣 (液壓或氣壓系統)。", image: "2-1.png" },
+                { id: "pre_04", title: "【起重機本體】檢查鋼索是否正確纏繞在捲筒與滑輪凹槽中，無亂繩或跳槽現象。", image: "2-2.png" },
+                { id: "pre_05", title: "【吊掛器具】檢查吊索 (鋼索、鐵鍊、纖維帶) 是否有扭結、斷絲、割傷、腐蝕或熱損壞。", image: "2-3.png" },
+                { id: "pre_06", title: "【吊掛器具】確認所有吊具均有清晰的額定荷重標示，無標示者不得使用。", image: "2-4.png" },
+                { id: "pre_07", title: "【吊掛器具】檢查吊鉤是否有變形、裂紋，防滑舌片是否能正常閉合。", image: "2-5.png" }
+            ]
+        },
+        {
+            type: "group",
+            id: "pre_func",
+            stage: "pre",
+            title: "3. 功能測試 (Operational Tests) - 須在無負載下進行",
+            items: [
+                { id: "pre_08", title: "【控制器方向】確認控制桿或按鈕的方向標示 (上、下、東、西等) 與實際動作方向一致。", image: "" },
+                { id: "pre_09", title: "【煞車與動作】測試吊升、橫行(小車)、縱行(大車)的動作是否順暢，並確認煞車功能正常。", image: "" },
+                { id: "pre_10", title: "【過卷預防裝置】(重要★) 必須在作業開始前測試。以慢速(寸動)方式提升吊鉤，觸發開關確認會自動停止，防止過卷。", image: "" },
+                { id: "pre_11", title: "【通訊警告裝置】測試對講機、指揮手勢有效，警鈴、喇叭或警示燈是否運作正常。", image: "" }
+            ]
+        },
+
+        // === 二、作業中確認 (Checks During Operation) ===
+        {
+            type: "group",
+            id: "during_load",
+            stage: "during",
+            title: "1. 吊掛與負載確認",
+            items: [
+                { id: "dur_01", title: "【重量確認】確認荷物重量低於起重機與吊具的額定荷重 (Rated Load)，嚴禁超載。", image: "" },
+                { id: "dur_02", title: "【重心平衡】確認荷物已固定牢靠且重心平衡，吊索無扭結且未直接纏繞荷物 (應使用適當吊具)。", image: "" },
+                { id: "dur_03", title: "【吊掛角度】確認荷物已固定牢靠且吊掛角度為 30° < X < 60° 內。", image: "" },
+                { id: "dur_04", title: "【防止割傷】若吊索接觸荷物尖銳邊角，是否已加裝護角或軟墊保護。", image: "" }
+            ]
+        },
+        {
+            type: "group",
+            id: "during_lift",
+            stage: "during",
+            title: "2. 起吊操作原則",
+            items: [
+                { id: "dur_05", title: "【垂直起吊】確認鋼索垂直位於荷物正上方，嚴禁側拉 (Side Pull)，以免損壞導繩器或導致翻覆。", image: "" },
+                { id: "dur_06", title: "【試吊】(Inch/Trial Lift) 是否執行 333 運動 (起吊30公分、暫停3秒、確認3方安全)。", image: "" },
+                { id: "dur_07", title: "【平穩操作】避免急加速或急減速 (Shock Loading)。", image: "" }
+            ]
+        },
+        {
+            type: "group",
+            id: "during_env",
+            stage: "during",
+            title: "3. 環境與人員管制",
+            items: [
+                { id: "dur_08", title: "【淨空區域】確認吊掛路徑上無障礙物，且嚴禁吊運荷物經過人員上方。", image: "" },
+                { id: "dur_09", title: "【聽從指揮】操作員應只聽從指定指揮人員 (Signal person) 的信號；(註：若任何人發出「停止」信號，都必須立即停止)。", image: "" },
+                { id: "dur_10", title: "【人員禁止】嚴禁任何人搭乘吊鉤或站在荷物上 (除非使用符合規範之載人吊籃並經許可)。", image: "" }
+            ]
+        },
+
+        // === 三、作業後檢查 (Post-Operation Checks) ===
+        {
+            type: "group",
+            id: "post_park",
+            stage: "post",
+            title: "1. 停機位置與處置",
+            items: [
+                { id: "post_01", title: "【吊鉤歸位】將吊鉤與吊具升至離地適當高度，高於地面所有障礙物，以免人員撞擊。", image: "" },
+                { id: "post_02", title: "【控制器歸零】將所有控制器歸回「關閉 (OFF)」位置。", image: "" }
+            ]
+        },
+        {
+            type: "group",
+            id: "post_power",
+            stage: "post",
+            title: "2. 斷電與安全鎖定",
+            items: [
+                { id: "post_03", title: "【切斷電源】打開 (斷開) 主電源開關 (Main Disconnect Switch)。", image: "" },
+                { id: "post_04", title: "【收納控制器】若是遙控操作，應關閉發射器電源並存放在指定安全處。", image: "" }
+            ]
+        },
+        {
+            type: "group",
+            id: "post_outdoor",
+            stage: "post",
+            title: "3. 戶外起重機的額外措施",
+            items: [
+                { id: "post_05", title: "【防風固定】對於戶外型起重機，是否已採取防風措施 (如夾軌器或錨定裝置)，以防止風力吹動起重機滑行。", image: "" }
+            ]
+        },
+        {
+            type: "group",
+            id: "post_report",
+            stage: "post",
+            title: "4. 異常通報",
+            items: [
+                { id: "post_06", title: "【故障回報】若在作業中發現任何機械異常、怪聲或損壞，必須通報管理人員或下一班操作員，並在修復前不得再使用。", image: "" }
+            ]
+        }
+    ];
+
+    // === 2. Service Worker 與 iOS ===
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW failed', err)); });
+    }
+    const isIos = () => /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+    const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
+    if (isIos() && !isInStandaloneMode()) setTimeout(() => document.getElementById('ios-install-prompt').style.display = 'block', 2000);
+
+    // === 3. IndexedDB 資料庫 ===
+    const DB_NAME = "UnifiedCheckDB_V2"; // Version updated
+    const STORAGE_KEY = "CHECK_DRAFT_STAGE";
+    let db;
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = (e) => { db = e.target.result; if(!db.objectStoreNames.contains("drafts")) db.createObjectStore("drafts", { keyPath: "id" }); };
+    request.onsuccess = (e) => { db = e.target.result; initPage(); };
+
+    // === 4. 簽名板 ===
+    const canvas = document.getElementById('sig-canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    function resizeCanvas() {
+        const wrapper = canvas.parentElement; const rect = wrapper.getBoundingClientRect(); const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = rect.width * ratio; canvas.height = rect.height * ratio;
+        ctx.scale(ratio, ratio); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#000';
+    }
+    window.addEventListener('resize', resizeCanvas);
+    function getPos(e) { const rect = canvas.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX; const cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: cx - rect.left, y: cy - rect.top }; }
+    function startDraw(e) { if(e.target===canvas)e.preventDefault(); isDrawing=true; const pos=getPos(e); ctx.beginPath(); ctx.moveTo(pos.x,pos.y); }
+    function draw(e) { if(!isDrawing)return; if(e.target===canvas)e.preventDefault(); const pos=getPos(e); ctx.lineTo(pos.x,pos.y); ctx.stroke(); }
+    function stopDraw() { if(isDrawing){ isDrawing=false; autoSave(); } }
+    canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stopDraw); canvas.addEventListener('mouseout', stopDraw);
+    canvas.addEventListener('touchstart', startDraw, {passive:false}); canvas.addEventListener('touchmove', draw, {passive:false}); canvas.addEventListener('touchend', stopDraw);
+    function clearSignature() { ctx.clearRect(0,0,canvas.width,canvas.height); autoSave(); }
+    function isCanvasBlank() { const blank=document.createElement('canvas'); blank.width=canvas.width; blank.height=canvas.height; return canvas.toDataURL()===blank.toDataURL(); }
+
+    // === 5. 頁面初始化與渲染 ===
+    function initPage() {
+        const now = new Date();
+        document.getElementById('checkDate').value = now.toISOString().split('T')[0];
+        loadDraftFromDB();
+        setTimeout(resizeCanvas, 100);
+    }
+
+    // 核心渲染函數：根據階段 (Stage) 決定顯示哪些題目
+    function renderPanels() {
+        const container = document.getElementById('panelList'); 
+        const selectedStage = document.getElementById('checkStage').value;
+        
+        // 如果未選擇階段，顯示提示
+        if(!selectedStage) {
+            container.innerHTML = `<div style="text-align:center; padding:40px; color:#666; border:2px dashed #ccc; margin-bottom:20px;">
+                請先於上方<span style="color:#cc0000; font-weight:bold;">「3. 檢查階段」</span>選擇類別<br>
+                (作業前 / 作業中 / 作業後)
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = `<div class="section-title">2. 檢查項目 CHECKLIST</div>`;
+        
+        // 過濾邏輯：只顯示符合目前 Stage 的項目
+        const filteredConfig = CHECK_CONFIG.filter(config => config.stage === selectedStage);
+        
+        filteredConfig.forEach((config) => {
+            let html = "";
+            // 題組類型
+            if (config.type === "group") {
+                html += `
+                <div class="group-box">
+                    <div style="padding:10px 15px; background:#f0f0f0; border-bottom:1px solid #000;">
+                         <span style="font-weight:bold; font-size:1.1rem;">${config.title}</span>
+                    </div>
+                    ${config.items.map(item => createQuestionHtml(item)).join('')}
+                </div>`;
+            }
+            container.innerHTML += html;
+        });
+        
+        restoreValuesAfterRender();
+    }
+
+    function createQuestionHtml(item) {
+        let illustrationHtml = "";
+        if(item.image) {
+            illustrationHtml = `
+            <div class="illustration-container">
+                <span class="badge bg-secondary mb-1">參考示意圖</span>
+                <img src="${item.image}" class="illustration-img" onerror="this.style.display='none'" alt="示意圖">
+            </div>`;
+        }
+        
+        return `<div class="panel-row" id="row_${item.id}" data-id="${item.id}">
+            <div class="item-title">${item.title}</div>
+            ${illustrationHtml}
+            <div class="btn-check-group">
+                <input type="radio" class="btn-check-pass" name="${item.id}" id="${item.id}_pass" value="Pass" onchange="checkStatus('${item.id}'); autoSave()">
+                <label class="btn-check-label" for="${item.id}_pass">是 (Yes)</label>
+                <input type="radio" class="btn-check-fail" name="${item.id}" id="${item.id}_fail" value="Fail" onchange="checkStatus('${item.id}'); autoSave()">
+                <label class="btn-check-label" for="${item.id}_fail">否 (No)</label>
+            </div>
+            <div style="margin-top:10px;">
+                <input type="text" id="note_${item.id}" placeholder="備註說明 (Remarks)..." oninput="autoSave()" style="margin-bottom:5px; border-bottom:1px solid #ccc; border-top:none; border-left:none; border-right:none;">
+                <label class="btn btn-sm btn-outline-secondary w-100" style="border-radius:0;">
+                    📷 拍攝照片 / 上傳 Photo
+                    <input type="file" id="file_${item.id}" accept="image/*" capture="environment" style="display:none" onchange="handleImage(this, '${item.id}')">
+                </label>
+                <div class="preview-container"><img id="preview_${item.id}" class="preview-img"></div>
+            </div>
+        </div>`;
+    }
+
+    window.checkStatus = function(id) {
+        const row = document.getElementById(`row_${id}`);
+        if(row) {
+            const pass = document.getElementById(`${id}_pass`).checked;
+            const fail = document.getElementById(`${id}_fail`).checked;
+            row.classList.remove('completed', 'error');
+            if(pass) row.classList.add('completed');
+            if(fail) row.classList.add('error');
+        }
+    }
+
+    window.handleImage = function(input, id) {
+        if(input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById(`preview_${id}`);
+                img.src = e.target.result; img.style.display = 'inline-block';
+                autoSave();
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // === 6. 自動儲存與讀取 ===
+    let savedDataCache = null; 
+    let saveTimer; 
+    window.autoSave = function() { clearTimeout(saveTimer); saveTimer = setTimeout(saveToDB, 500); }
+    
+    function saveToDB() {
+        if(!db) return;
+        const basicInfo = {
+            date: document.getElementById('checkDate').value,
+            main: document.getElementById('mainContractor').value,
+            sub: document.getElementById('subContractor').value,
+            stage: document.getElementById('checkStage').value, // 改為儲存 stage
+            insp: document.getElementById('inspectorName').value,
+            point: document.getElementById('liftingPoint').value
+        };
+        
+        const radios = Array.from(document.querySelectorAll('input[type="radio"]:checked')).map(r => r.id);
+        const notes = Array.from(document.querySelectorAll('input[type="text"][id^="note_"]')).reduce((acc, el) => ({...acc, [el.id]: el.value}), {});
+        const images = Array.from(document.querySelectorAll('.preview-img')).reduce((acc, img) => (img.src && img.src.startsWith('data:') ? {...acc, [img.id]: img.src} : acc), {});
+        
+        savedDataCache = { radios, notes, images };
+
+        const data = { id: STORAGE_KEY, basicInfo: basicInfo, radios: radios, notes: notes, images: images, signature: isCanvasBlank() ? null : canvas.toDataURL() };
+        const tx = db.transaction(["drafts"], "readwrite"); tx.objectStore("drafts").put(data);
+        tx.oncomplete = () => { const status = document.getElementById('autoSaveStatus'); status.style.display='inline'; setTimeout(()=> status.style.display='none', 2000); };
+    }
+
+    function loadDraftFromDB() {
+        if(!db) return;
+        db.transaction(["drafts"]).objectStore("drafts").get(STORAGE_KEY).onsuccess = (e) => {
+            const data = e.target.result; if(!data) return;
+            
+            if(data.basicInfo) {
+                document.getElementById('checkDate').value = data.basicInfo.date || "";
+                document.getElementById('mainContractor').value = data.basicInfo.main || "";
+                document.getElementById('subContractor').value = data.basicInfo.sub || "";
+                document.getElementById('inspectorName').value = data.basicInfo.insp || "";
+                document.getElementById('liftingPoint').value = data.basicInfo.point || "";
+                document.getElementById('checkStage').value = data.basicInfo.stage || ""; // 讀取 stage
+            }
+
+            savedDataCache = { radios: data.radios || [], notes: data.notes || {}, images: data.images || {} };
+            renderPanels(); 
+
+            restoreValuesAfterRender();
+
+            if(data.signature) { const i = new Image(); i.src = data.signature; i.onload = () => ctx.drawImage(i,0,0, canvas.width, canvas.height); }
+        };
+    }
+
+    function restoreValuesAfterRender() {
+        if(!savedDataCache) return;
+        if(savedDataCache.radios) {
+            savedDataCache.radios.forEach(id => { 
+                const el = document.getElementById(id); 
+                if(el) { el.checked = true; const rowId = id.replace(/_(pass|fail)$/, ''); checkStatus(rowId); } 
+            });
+        }
+        if(savedDataCache.notes) {
+            Object.keys(savedDataCache.notes).forEach(k => { 
+                const el = document.getElementById(k); 
+                if(el) el.value = savedDataCache.notes[k]; 
+            });
+        }
+        if(savedDataCache.images) {
+            Object.keys(savedDataCache.images).forEach(k => { 
+                const img = document.getElementById(k); 
+                if(img) { img.src = savedDataCache.images[k]; img.style.display = 'inline-block'; } 
+            });
+        }
+    }
+
+    window.clearDraft = function() { if(confirm("確定要清除所有資料重填嗎？")) { db.transaction(["drafts"], "readwrite").objectStore("drafts").delete(STORAGE_KEY); location.reload(); } }
+
+    // === 7. 下載報告 ===
+    window.downloadReport = function() {
+        // 更新檢核欄位
+        const basicFields = ['mainContractor', 'checkStage', 'inspectorName', 'liftingPoint', 'checkDate'];
+        if(basicFields.some(id => !document.getElementById(id).value)) { alert("⚠️ 請填寫完整的「作業基本資料」！"); window.scrollTo(0,0); return; }
+        if(isCanvasBlank()) { alert("⚠️ 請簽名！"); document.getElementById('sig-canvas').classList.add('sig-error'); document.getElementById('sig-section').scrollIntoView(); return; }
+        
+        const visibleRows = Array.from(document.querySelectorAll('.panel-row')).filter(row => row.offsetParent !== null);
+        
+        let errorCount = 0; let firstErrorRow = null;
+        visibleRows.forEach(row => {
+            const id = row.getAttribute('data-id');
+            const pass = document.getElementById(`${id}_pass`).checked;
+            const fail = document.getElementById(`${id}_fail`).checked;
+            if(!pass && !fail) { errorCount++; row.classList.add('error'); if(!firstErrorRow) firstErrorRow = row; }
+        });
+        if(errorCount > 0) { alert(`❌ 尚有 ${errorCount} 個檢查項目未勾選！`); firstErrorRow.scrollIntoView({behavior:'smooth', block:'center'}); return; }
+
+        let reportItemsHtml = ""; let failCount = 0;
+        visibleRows.forEach(row => {
+            const id = row.getAttribute('data-id');
+            const title = row.querySelector('.item-title').innerText;
+            
+            const isPass = document.getElementById(`${id}_pass`).checked;
+            const noteVal = document.getElementById(`note_${id}`).value;
+            const imgEl = document.getElementById(`preview_${id}`);
+            if(!isPass) failCount++;
+            
+            const statusHtml = isPass ? '<span class="txt-pass">✔ 合格</span>' : '<span class="txt-fail">✘ 異常</span>';
+            const noteHtml = noteVal ? `<div style="margin-top:2px; font-size:14px; color:#555;">備註：${noteVal}</div>` : "";
+            const imgHtml = (imgEl && imgEl.src && imgEl.style.display !== 'none') ? `<img src="${imgEl.src}" class="report-img-large">` : "";
+
+            reportItemsHtml += `
+            <div class="report-item" style="${!isPass ? 'background-color:#fff5f5;' : ''}">
+                <div class="report-item-head"><span>${title}</span> ${statusHtml}</div>
+                ${noteHtml} ${imgHtml}
+            </div>`;
+        });
+
+        const main = document.getElementById('mainContractor').value;
+        const sub = document.getElementById('subContractor').value;
+        const insp = document.getElementById('inspectorName').value;
+        // 改為取得 Check Stage 的文字
+        const stageSelect = document.getElementById('checkStage');
+        const stageText = stageSelect.options[stageSelect.selectedIndex].text;
+        
+        const point = document.getElementById('liftingPoint').value;
+        const checkDate = document.getElementById('checkDate').value;
+        
+        const fullHtml = `<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><title>起重吊掛檢查報告</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", "Heiti TC", sans-serif; padding: 40px; background: #fff; color: #000; margin: 0; }
+        .container { max-width: 800px; margin: 0 auto; border: 2px solid #000; padding: 30px; }
+        .report-header { text-align: center; border-bottom: 2px solid #000; margin-bottom: 20px; padding-bottom: 10px; }
+        .report-title { font-size: 28px; font-weight: 900; margin: 0; color: #000; }
+        .report-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; border: 1px solid #000; padding: 20px; background: #fff; font-size: 16px; }
+        .report-section-title { font-size: 18px; font-weight: bold; color: #fff; background: #000; padding: 5px 10px; margin-bottom: 15px; margin-top: 25px; -webkit-print-color-adjust: exact; }
+        .report-item { border-bottom: 1px solid #000; padding: 12px 0; }
+        .report-item-head { font-weight: bold; font-size: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .report-img-large { max-height: 300px; max-width: 100%; border: 1px solid #000; display: block; margin: 8px 0; }
+        .report-footer { margin-top: 40px; display: flex; justify-content: space-between; }
+        .report-sig-box { text-align: center; width: 45%; border: 1px solid #000; padding: 10px; }
+        .report-sig-line { border-top: 1px solid #000; padding-top: 8px; font-weight: bold; margin-top: 5px; font-size: 16px;}
+        .report-sig-img { height: 70px; display: block; margin: 0 auto; }
+        .txt-pass { color: #000; font-weight:bold; } .txt-fail { color: #cc0000; font-weight:bold; }
+    </style></head><body>
+    <div class="container">
+        <div class="report-header"><div class="report-title">🏗️ 起重吊掛檢查報告</div></div>
+        <div class="report-info-grid">
+            <div><strong>日期：</strong> ${checkDate}</div>
+            <div><strong>檢查階段：</strong> ${stageText}</div>
+            <div><strong>主承商：</strong> ${main}</div>
+            <div><strong>次承商：</strong> ${sub}</div>
+            <div><strong>吊掛點位：</strong> ${point}</div>
+            <div><strong>檢查人員：</strong> ${insp}</div>
+        </div>
+        <div class="report-section-title">檢查項目細節</div>
+        <div>${reportItemsHtml}</div>
+        <div style="margin-top:20px; font-size:18px; font-weight:bold; border-top:2px solid #000; padding-top:10px;">
+            總結：${failCount > 0 ? '<span style="color:red">異常 (' + failCount + ' 項) - 請立即改善</span>' : '<span style="color:green">全數合格 - 可開始作業</span>'}
+        </div>
+        <div class="report-footer">
+            <div class="report-sig-box"><img src="${canvas.toDataURL()}" class="report-sig-img"><div class="report-sig-line">檢查人員簽章</div></div>
+            <div class="report-sig-box"><div style="height:70px;"></div><div class="report-sig-line">工地主任/監工複核</div></div>
+        </div>
+    </div></body></html>`;
+
+        const blob = new Blob([fullHtml], {type: "text/html;charset=utf-8"});
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `檢查報告_${checkDate}_${stageSelect.value}.html`;
+        link.click();
+    }
+</script>
+</body>
+</html>
