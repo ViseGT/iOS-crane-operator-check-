@@ -140,11 +140,24 @@
         .illustration-img { max-width: 100%; max-height: 200px; object-fit: contain; }
 
         .sig-wrapper { 
-            width: 100%; height: 180px; 
+            width: 100%; 
+            height: 180px; 
             border: 2px solid #000; 
             border-radius: 0; 
-            background: #fff; position: relative;
+            background: #fff; 
+            position: relative;
+            /* 防止內容溢出 */
+            overflow: hidden;
         }
+        
+        /* 強制 Canvas 填滿容器，並禁止瀏覽器預設觸控行為(如捲動) */
+        #sig-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none; 
+        }
+
         .sig-error { border-color: #dc3545; background: #fff5f5; }
 
         /* 9. 懸浮按鈕 */
@@ -231,7 +244,7 @@
 </div>
 
 <script>
-    // === 1. 更新後的資料設定 (依據您的新需求) ===
+    // === 1. 更新後的資料設定 ===
     // stage: 'pre' (作業前), 'during' (作業中), 'post' (作業後)
     const CHECK_CONFIG = [
         // === 一、作業前檢查 (Pre-Operation) ===
@@ -358,29 +371,69 @@
     if (isIos() && !isInStandaloneMode()) setTimeout(() => document.getElementById('ios-install-prompt').style.display = 'block', 2000);
 
     // === 3. IndexedDB 資料庫 ===
-    const DB_NAME = "UnifiedCheckDB_V2"; // Version updated
+    const DB_NAME = "UnifiedCheckDB_V2";
     const STORAGE_KEY = "CHECK_DRAFT_STAGE";
     let db;
     const request = indexedDB.open(DB_NAME, 1);
     request.onupgradeneeded = (e) => { db = e.target.result; if(!db.objectStoreNames.contains("drafts")) db.createObjectStore("drafts", { keyPath: "id" }); };
     request.onsuccess = (e) => { db = e.target.result; initPage(); };
 
-    // === 4. 簽名板 ===
+    // === 4. 簽名板 (已修正) ===
     const canvas = document.getElementById('sig-canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
+    
+    // 修正後的 resizeCanvas 函式
     function resizeCanvas() {
-        const wrapper = canvas.parentElement; const rect = wrapper.getBoundingClientRect(); const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvas.width = rect.width * ratio; canvas.height = rect.height * ratio;
-        ctx.scale(ratio, ratio); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#000';
+        const wrapper = canvas.parentElement; 
+        const rect = wrapper.getBoundingClientRect(); 
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        
+        // 設定 Canvas 的「實際解析度」
+        canvas.width = rect.width * ratio; 
+        canvas.height = rect.height * ratio;
+        
+        // 縮放繪圖上下文，讓座標系統對應到 CSS 尺寸
+        ctx.scale(ratio, ratio); 
+        ctx.lineWidth = 3; 
+        ctx.lineCap = 'round'; 
+        ctx.lineJoin = 'round'; 
+        ctx.strokeStyle = '#000';
     }
     window.addEventListener('resize', resizeCanvas);
-    function getPos(e) { const rect = canvas.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX; const cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: cx - rect.left, y: cy - rect.top }; }
-    function startDraw(e) { if(e.target===canvas)e.preventDefault(); isDrawing=true; const pos=getPos(e); ctx.beginPath(); ctx.moveTo(pos.x,pos.y); }
-    function draw(e) { if(!isDrawing)return; if(e.target===canvas)e.preventDefault(); const pos=getPos(e); ctx.lineTo(pos.x,pos.y); ctx.stroke(); }
+    
+    function getPos(e) { 
+        const rect = canvas.getBoundingClientRect(); 
+        const cx = e.touches ? e.touches[0].clientX : e.clientX; 
+        const cy = e.touches ? e.touches[0].clientY : e.clientY; 
+        return { x: cx - rect.left, y: cy - rect.top }; 
+    }
+    function startDraw(e) { 
+        if(e.target===canvas) e.preventDefault(); // 防止手機滾動
+        isDrawing=true; 
+        const pos=getPos(e); 
+        ctx.beginPath(); 
+        ctx.moveTo(pos.x,pos.y); 
+    }
+    function draw(e) { 
+        if(!isDrawing) return; 
+        if(e.target===canvas) e.preventDefault(); // 防止手機滾動
+        const pos=getPos(e); 
+        ctx.lineTo(pos.x,pos.y); 
+        ctx.stroke(); 
+    }
     function stopDraw() { if(isDrawing){ isDrawing=false; autoSave(); } }
-    canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stopDraw); canvas.addEventListener('mouseout', stopDraw);
-    canvas.addEventListener('touchstart', startDraw, {passive:false}); canvas.addEventListener('touchmove', draw, {passive:false}); canvas.addEventListener('touchend', stopDraw);
+    
+    canvas.addEventListener('mousedown', startDraw); 
+    canvas.addEventListener('mousemove', draw); 
+    canvas.addEventListener('mouseup', stopDraw); 
+    canvas.addEventListener('mouseout', stopDraw);
+    
+    // 加上 {passive: false} 確保 preventDefault 有效
+    canvas.addEventListener('touchstart', startDraw, {passive:false}); 
+    canvas.addEventListener('touchmove', draw, {passive:false}); 
+    canvas.addEventListener('touchend', stopDraw);
+    
     function clearSignature() { ctx.clearRect(0,0,canvas.width,canvas.height); autoSave(); }
     function isCanvasBlank() { const blank=document.createElement('canvas'); blank.width=canvas.width; blank.height=canvas.height; return canvas.toDataURL()===blank.toDataURL(); }
 
@@ -397,7 +450,6 @@
         const container = document.getElementById('panelList'); 
         const selectedStage = document.getElementById('checkStage').value;
         
-        // 如果未選擇階段，顯示提示
         if(!selectedStage) {
             container.innerHTML = `<div style="text-align:center; padding:40px; color:#666; border:2px dashed #ccc; margin-bottom:20px;">
                 請先於上方<span style="color:#cc0000; font-weight:bold;">「3. 檢查階段」</span>選擇類別<br>
@@ -408,17 +460,15 @@
 
         container.innerHTML = `<div class="section-title">2. 檢查項目 CHECKLIST</div>`;
         
-        // 過濾邏輯：只顯示符合目前 Stage 的項目
         const filteredConfig = CHECK_CONFIG.filter(config => config.stage === selectedStage);
         
         filteredConfig.forEach((config) => {
             let html = "";
-            // 題組類型
             if (config.type === "group") {
                 html += `
                 <div class="group-box">
                     <div style="padding:10px 15px; background:#f0f0f0; border-bottom:1px solid #000;">
-                         <span style="font-weight:bold; font-size:1.1rem;">${config.title}</span>
+                          <span style="font-weight:bold; font-size:1.1rem;">${config.title}</span>
                     </div>
                     ${config.items.map(item => createQuestionHtml(item)).join('')}
                 </div>`;
@@ -493,7 +543,7 @@
             date: document.getElementById('checkDate').value,
             main: document.getElementById('mainContractor').value,
             sub: document.getElementById('subContractor').value,
-            stage: document.getElementById('checkStage').value, // 改為儲存 stage
+            stage: document.getElementById('checkStage').value,
             insp: document.getElementById('inspectorName').value,
             point: document.getElementById('liftingPoint').value
         };
@@ -520,7 +570,7 @@
                 document.getElementById('subContractor').value = data.basicInfo.sub || "";
                 document.getElementById('inspectorName').value = data.basicInfo.insp || "";
                 document.getElementById('liftingPoint').value = data.basicInfo.point || "";
-                document.getElementById('checkStage').value = data.basicInfo.stage || ""; // 讀取 stage
+                document.getElementById('checkStage').value = data.basicInfo.stage || "";
             }
 
             savedDataCache = { radios: data.radios || [], notes: data.notes || {}, images: data.images || {} };
@@ -558,7 +608,6 @@
 
     // === 7. 下載報告 ===
     window.downloadReport = function() {
-        // 更新檢核欄位
         const basicFields = ['mainContractor', 'checkStage', 'inspectorName', 'liftingPoint', 'checkDate'];
         if(basicFields.some(id => !document.getElementById(id).value)) { alert("⚠️ 請填寫完整的「作業基本資料」！"); window.scrollTo(0,0); return; }
         if(isCanvasBlank()) { alert("⚠️ 請簽名！"); document.getElementById('sig-canvas').classList.add('sig-error'); document.getElementById('sig-section').scrollIntoView(); return; }
@@ -598,7 +647,6 @@
         const main = document.getElementById('mainContractor').value;
         const sub = document.getElementById('subContractor').value;
         const insp = document.getElementById('inspectorName').value;
-        // 改為取得 Check Stage 的文字
         const stageSelect = document.getElementById('checkStage');
         const stageText = stageSelect.options[stageSelect.selectedIndex].text;
         
